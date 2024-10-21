@@ -22,6 +22,7 @@ use Spryker\Zed\CompanySalesConnector\Communication\Plugin\Sales\SaveCompanyUuid
 use Spryker\Zed\Currency\Communication\Plugin\Sales\CurrencyOrderExpanderPlugin;
 use Spryker\Zed\Customer\Communication\Plugin\Sales\CustomerOrderHydratePlugin;
 use Spryker\Zed\Discount\Communication\Plugin\Sales\DiscountOrderHydratePlugin;
+use Spryker\Zed\Kernel\Container;
 use Spryker\Zed\Oms\Communication\Plugin\Sales\IsCancellableOrderExpanderPlugin;
 use Spryker\Zed\Oms\Communication\Plugin\Sales\IsCancellableSearchOrderExpanderPlugin;
 use Spryker\Zed\Oms\Communication\Plugin\Sales\ItemStateOrderItemExpanderPlugin;
@@ -68,6 +69,25 @@ use Spryker\Zed\Shipment\Communication\Plugin\ShipmentOrderHydratePlugin;
 
 class SalesDependencyProvider extends SprykerSalesDependencyProvider
 {
+    /**
+     * @var string
+     */
+    public const FACADE_OMS_PYZ = 'FACADE_OMS_PYZ';
+
+    /**
+     * @param \Spryker\Zed\Kernel\Container $container
+     *
+     * @return \Spryker\Zed\Kernel\Container
+     */
+    public function provideCommunicationLayerDependencies(Container $container): Container
+    {
+        $container = parent::provideCommunicationLayerDependencies($container);
+
+        $container = $this->addPyzOmsFacade($container);
+
+        return $container;
+    }
+
     /**
      * @return array<\Spryker\Zed\Sales\Dependency\Plugin\OrderExpanderPreSavePluginInterface>
      */
@@ -240,5 +260,19 @@ class SalesDependencyProvider extends SprykerSalesDependencyProvider
             new ItemMetadataOrderItemsPostSavePlugin(),
             new ProductConfigurationOrderItemsPostSavePlugin(),
         ];
+    }
+
+    /**
+     * @param \Spryker\Zed\Kernel\Container $container
+     *
+     * @return \Spryker\Zed\Kernel\Container
+     */
+    protected function addPyzOmsFacade(Container $container): Container
+    {
+        $container->set(static::FACADE_OMS_PYZ, function (Container $container) {
+            return $container->getLocator()->oms()->facade();
+        });
+
+        return $container;
     }
 }

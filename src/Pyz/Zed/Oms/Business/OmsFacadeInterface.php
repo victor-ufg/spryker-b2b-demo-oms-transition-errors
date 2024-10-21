@@ -7,6 +7,7 @@
 
 namespace Pyz\Zed\Oms\Business;
 
+use Generated\Shared\Transfer\OmsTransitionErrorCollectionTransfer;
 use Generated\Shared\Transfer\TimeoutProcessorTimeoutRequestTransfer;
 use Generated\Shared\Transfer\TimeoutProcessorTimeoutResponseTransfer;
 use Spryker\Zed\Oms\Business\OmsFacadeInterface as SprykerOmsFacadeInterface;
@@ -28,4 +29,11 @@ interface OmsFacadeInterface extends SprykerOmsFacadeInterface
     public function calculateInitiationTimeout(
         TimeoutProcessorTimeoutRequestTransfer $timeoutProcessorTimeoutRequestTransfer,
     ): TimeoutProcessorTimeoutResponseTransfer;
+
+    /**
+     * @param $orderTransfer
+     *
+     * @return \Generated\Shared\Transfer\OmsTransitionErrorCollectionTransfer
+     */
+    public function getCurrentFailedTransitionsForIdSalesOrder(int $idSalesOrder): OmsTransitionErrorCollectionTransfer;
 }
