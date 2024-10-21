@@ -1,6 +1,6 @@
 {% for omsTransitionErrorTransfer in failedOmsTransitions %}
     {{
-    'Error transitioning the Item %idSalesOrderItem% from state %sourceState%%eventSuffix%: %errorMessage%'
+    'Error transitioning Item %idSalesOrderItem% from state %sourceState%%eventSuffix%: %errorMessage%'
     | trans({
         '%idSalesOrderItem%': omsTransitionErrorTransfer.idSalesOrderItem,
         '%sourceState%': omsTransitionErrorTransfer.sourceState,

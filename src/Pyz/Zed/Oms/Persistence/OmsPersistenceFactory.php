@@ -7,7 +7,7 @@
 
 namespace Pyz\Zed\Oms\Persistence;
 
-use Pyz\Zed\Oms\Persistence\Propel\Mapper\LogTransitionErrorMapper;
+use Pyz\Zed\Oms\Persistence\Propel\Mapper\OmsTransitionLogMapper;
 use Spryker\Zed\Oms\Persistence\OmsPersistenceFactory as SprykerOmsPersistenceFactory;
 
 /**
@@ -18,10 +18,10 @@ use Spryker\Zed\Oms\Persistence\OmsPersistenceFactory as SprykerOmsPersistenceFa
 class OmsPersistenceFactory extends SprykerOmsPersistenceFactory
 {
     /**
-     * @return \Pyz\Zed\Oms\Persistence\Propel\Mapper\LogTransitionErrorMapper
+     * @return \Pyz\Zed\Oms\Persistence\Propel\Mapper\OmsTransitionLogMapper
      */
-    public function createLogTransitionErrorMapper(): LogTransitionErrorMapper
+    public function createOmsTransitionLogMapper(): OmsTransitionLogMapper
     {
-        return new LogTransitionErrorMapper();
+        return new OmsTransitionLogMapper();
     }
 }

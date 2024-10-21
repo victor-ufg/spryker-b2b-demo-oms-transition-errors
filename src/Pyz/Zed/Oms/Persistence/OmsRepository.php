@@ -9,6 +9,7 @@ namespace Pyz\Zed\Oms\Persistence;
 
 use Generated\Shared\Transfer\OmsTransitionErrorCollectionTransfer;
 use Orm\Zed\Oms\Persistence\Map\SpyOmsTransitionLogTableMap;
+use Orm\Zed\Oms\Persistence\SpyOmsTransitionLogQuery;
 use Spryker\Zed\Oms\Persistence\OmsRepository as SprykerOmsRepository;
 
 /**
@@ -20,6 +21,8 @@ class OmsRepository extends SprykerOmsRepository
      * @var int
      */
     public const PDO_FETCH_ASSOC = 2;
+    const TABLE_ALIAS_LAST_TRANSITIONS = 'last_transitions';
+    const COL_ALIAS_MAX_ID_OMS_TRANSITION_LOG = 'max_id_oms_transition_log';
 
     /**
      * @param int $idSalesOrder
@@ -28,64 +31,43 @@ class OmsRepository extends SprykerOmsRepository
      */
     public function getCurrentTransitionErrorsInLogByIdOrder(int $idSalesOrder): OmsTransitionErrorCollectionTransfer
     {
-        # @todo: Use orm? I couldn't get propel to generate my statement.
-        $sql_statement = $this->buildGetCurrentErrorsInLogByIdOrderSqlStatement($idSalesOrder);
-        $sql_connection = $this->getFactory()->getOmsQueryContainer()->getConnection();
 
-        $log_errors_pdo_results = $sql_connection->query($sql_statement)->fetchAll(static::PDO_FETCH_ASSOC);
+        $lastOmsTransitionLogByOrderItemQuery = $this->buildLastOmsTransitionLogByOrderItemQuery();
 
-        return $this->getFactory()->createLogTransitionErrorMapper()
-            ->mapOmsTransitionLogCollectionToOmsTransitionErrorTransfers($log_errors_pdo_results);
+        $logByIdOrderQuery = $this->getFactory()
+            ->getOmsQueryContainer()
+            ->queryLogByIdOrder($idSalesOrder)
+            ->addSelectQuery($lastOmsTransitionLogByOrderItemQuery, static::TABLE_ALIAS_LAST_TRANSITIONS, false)
+            ->where(sprintf(
+                '%s = %s.%s',
+                SpyOmsTransitionLogTableMap::COL_ID_OMS_TRANSITION_LOG,
+                static::TABLE_ALIAS_LAST_TRANSITIONS,
+                static::COL_ALIAS_MAX_ID_OMS_TRANSITION_LOG,
+            ));
+
+        $omsTransitionErrorTransfers = $this->getFactory()->createOmsTransitionLogMapper()
+            ->collectionToOmsTransitionErrorTransfers($logByIdOrderQuery->findByIsError(true));
+
+        return $omsTransitionErrorTransfers;
     }
 
     /**
-     * @param int $idSalesOrder
-     *
-     * @return string
+     * @return SpyOmsTransitionLogQuery
      */
-    private function buildGetCurrentErrorsInLogByIdOrderSqlStatement(int $idSalesOrder): string
+    private function buildLastOmsTransitionLogByOrderItemQuery(): SpyOmsTransitionLogQuery
     {
-        return sprintf(
-            'SELECT
-                            %s,
-                            %s,
-                            %s,
-                            %s,
-                            %s
-                        FROM %s
-                            INNER JOIN (
-                                SELECT
-                                    MAX(%s) as id_oms_transition_log
-                                FROM %s
-                                GROUP BY
-                                    %s,
-                                    %s
-                            ) as last_transition
-                                ON %s = last_transition.id_oms_transition_log
-                        WHERE
-                            %s = %u
-                          AND %s IS NOT NULL
-                          ',
-            # Select
-            SpyOmsTransitionLogTableMap::COL_FK_SALES_ORDER,
-            SpyOmsTransitionLogTableMap::COL_FK_SALES_ORDER_ITEM,
-            SpyOmsTransitionLogTableMap::COL_ERROR_MESSAGE,
-            SpyOmsTransitionLogTableMap::COL_EVENT,
-            SpyOmsTransitionLogTableMap::COL_SOURCE_STATE,
-            # From
-            SpyOmsTransitionLogTableMap::TABLE_NAME,
-            # Inner Join
-            SpyOmsTransitionLogTableMap::COL_ID_OMS_TRANSITION_LOG,
-            SpyOmsTransitionLogTableMap::TABLE_NAME,
-            # Group By
-            SpyOmsTransitionLogTableMap::COL_FK_SALES_ORDER,
-            SpyOmsTransitionLogTableMap::COL_FK_SALES_ORDER_ITEM,
-            # On
-            SpyOmsTransitionLogTableMap::COL_ID_OMS_TRANSITION_LOG,
-            SpyOmsTransitionLogTableMap::COL_FK_SALES_ORDER,
-            # Where
-            $idSalesOrder,
-            SpyOmsTransitionLogTableMap::COL_IS_ERROR,
-        );
+        $lastOmsTransitionLogByOrderItemQuery = SpyOmsTransitionLogQuery::create();
+        $lastOmsTransitionLogByOrderItemQuery
+            ->addAsColumn(
+                'max_id_oms_transition_log',
+                sprintf(
+                    'MAX(%s)',
+                    SpyOmsTransitionLogTableMap::COL_ID_OMS_TRANSITION_LOG,
+                )
+            )
+            ->groupByFkSalesOrder()
+            ->groupByFkSalesOrderItem();
+
+        return $lastOmsTransitionLogByOrderItemQuery;
     }
 }

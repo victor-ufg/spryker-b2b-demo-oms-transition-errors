@@ -98,6 +98,7 @@
         {# BOF: Failed OMS Transitions feature #}
         {% if failedOmsTransitions is not empty %}
                 <div class="col-md-12">
+                    {# @todo: ⚠️ should be an icon :) #}
                     {% embed '@Gui/Partials/widget.twig' with { widget_title: '⚠️ ' ~ ('There are active OMS State Transition Errors') } %}
                         {% block widget_content %}
                             {% include '@Oms/TransitionErrors/_partial/transition-errors.twig' with {
